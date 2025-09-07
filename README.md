@@ -1,7 +1,7 @@
 # Quant-Analysis-example
-Example for backtest and time series analysis
+Example for backtest and time series analysis, developed by Chang Ye @ 09-05-2025
 
-Stock Backtesting Engine
+**Stock Backtesting Engine**
 A comprehensive Python-based backtesting framework for developing and testing quantitative trading strategies using real-world market data.
 
 **Features**
