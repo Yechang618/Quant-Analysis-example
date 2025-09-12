@@ -32,7 +32,20 @@ class BacktestEngine:
         self.results = None
 
     def fetch_data(self, ticker, start_date, end_date, interval='1d'):
-        """Fetch real-world data from Yahoo Finance"""
+        """
+        Fetch real-world data from Yahoo Finance
+        INPUTS:
+            ticker
+            start_date
+            end_date
+            interval (default, '1d')
+
+        OUTPUT:
+            data: pandas dataframe. 
+                -> columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+                -> index, DateTimeIndex
+            
+        """
         print(f"Fetching data for {ticker} from {start_date} to {end_date}...")
 
         try:
@@ -51,6 +64,7 @@ class BacktestEngine:
             data = data.dropna()
             data = data[~data.index.duplicated(keep='first')]
             data.columns = data.columns.droplevel(-1)
+            data['Amount'] = data['Close'] * data['Volume']
             print(f"Data fetched: {len(data)} records from {data.index[0]} to {data.index[-1]}")
             self.data = data
             return data
@@ -167,7 +181,9 @@ class BacktestEngine:
         return df
 
     def run_backtest(self, strategy='trend_following'):
-        """Run the backtest with the selected strategy"""
+        """
+        Run the backtest with the selected strategy
+        """
         print(f"Running backtest with {strategy} strategy...")
 
         # Calculate indicators and generate signals
