@@ -42,7 +42,7 @@ class BacktestEngine:
 
         OUTPUT:
             data: pandas dataframe. 
-                -> columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+                -> columns = ['open', 'high', 'low', 'close', 'volume']
                 -> index, DateTimeIndex
             
         """
@@ -55,7 +55,7 @@ class BacktestEngine:
                 raise ValueError(f"No data found for {ticker} in the specified date range")
 
             # Validate required columns
-            required_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
+            required_cols = ['open', 'high', 'low', 'close', 'volume']
             for col in required_cols:
                 if col not in data.columns:
                     raise ValueError(f"Missing required column: {col}")
@@ -64,7 +64,7 @@ class BacktestEngine:
             data = data.dropna()
             data = data[~data.index.duplicated(keep='first')]
             data.columns = data.columns.droplevel(-1)
-            data['Amount'] = data['Close'] * data['Volume']
+            data['amount'] = data['close'] * data['volume']
             print(f"Data fetched: {len(data)} records from {data.index[0]} to {data.index[-1]}")
             self.data = data
             return data
@@ -78,11 +78,11 @@ class BacktestEngine:
         df = self.data.copy()
 
         # Moving Averages
-        df['SMA_20'] = df['Close'].rolling(window=20).mean()
-        df['SMA_50'] = df['Close'].rolling(window=50).mean()
-        df['SMA_200'] = df['Close'].rolling(window=200).mean()
-        df['EMA_12'] = df['Close'].ewm(span=12).mean()
-        df['EMA_26'] = df['Close'].ewm(span=26).mean()
+        df['SMA_20'] = df['close'].rolling(window=20).mean()
+        df['SMA_50'] = df['close'].rolling(window=50).mean()
+        df['SMA_200'] = df['close'].rolling(window=200).mean()
+        df['EMA_12'] = df['close'].ewm(span=12).mean()
+        df['EMA_26'] = df['close'].ewm(span=26).mean()
 
         # MACD
         df['MACD'] = df['EMA_12'] - df['EMA_26']
@@ -90,15 +90,15 @@ class BacktestEngine:
         df['MACD_Histogram'] = df['MACD'] - df['MACD_Signal']
 
         # RSI
-        delta = df['Close'].diff()
+        delta = df['close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
         rs = gain / loss
         df['RSI'] = 100 - (100 / (1 + rs))
 
         # CORRECTED: Bollinger Bands - FIXED THE ERROR
-        bb_middle = df['Close'].rolling(window=20).mean()
-        bb_std = df['Close'].rolling(window=20).std()
+        bb_middle = df['close'].rolling(window=20).mean()
+        bb_std = df['close'].rolling(window=20).std()
 
         df['BB_Middle'] = bb_middle
         df['BB_Upper'] = bb_upper = bb_middle + (bb_std * 2)
@@ -106,49 +106,49 @@ class BacktestEngine:
         df['BB_Width'] = (bb_upper - bb_lower) / bb_middle
 
         # Stochastic Oscillator
-        low_14 = df['Low'].rolling(window=14).min()
-        high_14 = df['High'].rolling(window=14).max()
-        df['%K'] = 100 * ((df['Close'] - low_14) / (high_14 - low_14))
+        low_14 = df['low'].rolling(window=14).min()
+        high_14 = df['high'].rolling(window=14).max()
+        df['%K'] = 100 * ((df['close'] - low_14) / (high_14 - low_14))
         df['%D'] = df['%K'].rolling(window=3).mean()
 
         # ATR (Average True Range) - CORRECTED
-        high_low = df['High'] - df['Low']
-        high_close = np.abs(df['High'] - df['Close'].shift())
-        low_close = np.abs(df['Low'] - df['Close'].shift())
+        high_low = df['high'] - df['low']
+        high_close = np.abs(df['high'] - df['close'].shift())
+        low_close = np.abs(df['low'] - df['close'].shift())
         # Use concat with axis=1 to create DataFrame, then take max along axis=1
         ranges = pd.concat([high_low, high_close, low_close], axis=1)
         true_range = ranges.max(axis=1)
         bb_ART = true_range.rolling(window=14).mean()
         df['ATR'] = bb_ART
-        df['ATR_Pct'] = bb_ART / df['Close'] * 100
+        df['ATR_Pct'] = bb_ART / df['close'] * 100
 
         # Volume indicators
-        bb_SMA_20 = df['Volume'].rolling(window=20).mean()
+        bb_SMA_20 = df['volume'].rolling(window=20).mean()
         df['Volume_SMA_20'] = bb_SMA_20
-        df['Volume_Ratio'] = df['Volume'] / bb_SMA_20
+        df['Volume_Ratio'] = df['volume'] / bb_SMA_20
 
         # Price momentum
-        df['Momentum_5'] = df['Close'].pct_change(5)
-        df['Momentum_20'] = df['Close'].pct_change(20)
+        df['Momentum_5'] = df['close'].pct_change(5)
+        df['Momentum_20'] = df['close'].pct_change(20)
 
         self.data = df
         return df
 
-    def generate_signals(self, strategy='trend_following'):
+    def generate_signals(self, strategy='trend_following', **kwargs):
         """Generate trading signals based on different strategies"""
         df = self.data.copy()
         df['signal'] = 0  # 0: hold, 1: buy, -1: sell
 
         if strategy == 'mean_reversion':
             # Buy when price is 2% below lower Bollinger Band, sell when 2% above upper
-            df['signal'] = np.where(df['Close'] < df['BB_Lower'] * 0.98, 1,
-                                  np.where(df['Close'] > df['BB_Upper'] * 1.02, -1, 0))
+            df['signal'] = np.where(df['close'] < df['BB_Lower'] * 0.98, 1,
+                                  np.where(df['close'] > df['BB_Upper'] * 1.02, -1, 0))
 
         elif strategy == 'trend_following':
             # Buy when price above SMA_200 and SMA_20 > SMA_50
-            df['signal'] = np.where((df['Close'] > df['SMA_200']) &
+            df['signal'] = np.where((df['close'] > df['SMA_200']) &
                                   (df['SMA_20'] > df['SMA_50']), 1,
-                                  np.where(df['Close'] < df['SMA_200'], -1, 0))
+                                  np.where(df['close'] < df['SMA_200'], -1, 0))
 
         elif strategy == 'macd_crossover':
             # Buy when MACD crosses above signal line and both are positive
@@ -166,12 +166,21 @@ class BacktestEngine:
 
         elif strategy == 'breakout':
             # Buy when price breaks above 20-day high, sell when breaks below 20-day low
-            df['20d_high'] = df['High'].rolling(window=20).max()
-            df['20d_low'] = df['Low'].rolling(window=20).min()
-            df['signal'] = np.where(df['Close'] > df['20d_high'].shift(1), 1,
-                                  np.where(df['Close'] < df['20d_low'].shift(1), -1, 0))
+            df['20d_high'] = df['high'].rolling(window=20).max()
+            df['20d_low'] = df['low'].rolling(window=20).min()
+            df['signal'] = np.where(df['close'] > df['20d_high'].shift(1), 1,
+                                  np.where(df['close'] < df['20d_low'].shift(1), -1, 0))
+        elif strategy == 'kronos':
+            """
+            Kronos prediction: df_pred_kronos, columns include: close_pred, timestamps
+            Simple backtesting strategy: Buy if predicted close > current close, else sell.
+            """
+            assert "df_pred_kronos" in kwargs.keys()
+            df_pred_kronos = kwargs["df_pred_kronos"].copy()
+            assert len(df_pred_kronos) == len(df)
+            df['signal'] = np.where(df['close'] > df_pred_kronos['close_pred'].shift(1), 1,
+                                  np.where(df['close'] < df_pred_kronos['close_pred'].shift(1), -1, 0))
 
-        # Remove signals where indicators are NaN
         df['signal'] = df['signal'].replace(0, np.nan).ffill().fillna(0)
 
         # Add signal strength (optional)
@@ -180,7 +189,7 @@ class BacktestEngine:
         self.data = df
         return df
 
-    def run_backtest(self, strategy='trend_following'):
+    def run_backtest(self, strategy='trend_following', **kwargs):
         """
         Run the backtest with the selected strategy
         """
@@ -188,7 +197,12 @@ class BacktestEngine:
 
         # Calculate indicators and generate signals
         self.calculate_technical_indicators()
-        self.generate_signals(strategy)
+        if strategy == 'kronos':
+            assert 'df_pred_kronos' in kwargs.keys()
+            df_pred_kronos = kwargs['df_pred_kronos']
+            self.generate_signals(strategy, df_pred_kronos = df_pred_kronos)
+        else:
+            self.generate_signals(strategy)
 
         df = self.data.copy()
         capital = self.initial_capital
@@ -197,7 +211,7 @@ class BacktestEngine:
         equity_curve = []
 
         for i, row in df.iterrows():
-            current_price = row['Close'] * (1 + np.random.normal(0, self.slippage))
+            current_price = row['close'] * (1 + np.random.normal(0, self.slippage))
 
             # Execute trades based on signals
             if row['signal'] == 1 and position == 0:  # Buy signal
@@ -392,7 +406,7 @@ class BacktestEngine:
         fig, axes = plt.subplots(3, 2, figsize=(20, 15))
 
         # Price and signals
-        axes[0, 0].plot(self.data.index, self.data['Close'], label='Close Price', linewidth=1, color='black')
+        axes[0, 0].plot(self.data.index, self.data['close'], label='Close Price', linewidth=1, color='black')
         axes[0, 0].plot(self.data.index, self.data['SMA_50'], label='SMA 50', linestyle='--', alpha=0.7)
         axes[0, 0].plot(self.data.index, self.data['SMA_200'], label='SMA 200', linestyle='--', alpha=0.7)
 
@@ -413,7 +427,7 @@ class BacktestEngine:
 
         # Equity curve vs Benchmark
         equity_normalized = self.equity_curve['equity'] / self.equity_curve['equity'].iloc[0]
-        benchmark_normalized = self.benchmark_data['Close'] / self.benchmark_data['Close'].iloc[0]
+        benchmark_normalized = self.benchmark_data['close'] / self.benchmark_data['close'].iloc[0]
 
         axes[0, 1].plot(equity_normalized.index, equity_normalized, label='Strategy', linewidth=2)
         axes[0, 1].plot(benchmark_normalized.index, benchmark_normalized, label='Benchmark (S&P 500)', linewidth=2)
