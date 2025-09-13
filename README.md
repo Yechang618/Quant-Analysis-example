@@ -2,9 +2,9 @@ This is the back-testing engine developed by Chang Ye. Feel free to contect me v
 
 =========== **On-going Updates** ===========
 
-1. Fine-tuned Kronos for stock prediction and compared with traditional strategies. \
-2. Fine-tuned Kronos for derivatives prediction.\
-3. Implement more fancy machine learning models, such as Informer.\
+1. Fine-tuned Kronos for stock prediction and compared with traditional strategies. 
+2. Fine-tuned Kronos for derivatives prediction.
+3. Implement more fancy machine learning models, such as Informer.
 4. (long term plan) Stock prediction collaboritive with stock correlation information.
 
 ============ **Recent Updates** ============
