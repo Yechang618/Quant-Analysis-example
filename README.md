@@ -1,20 +1,24 @@
-This is the back-testing engine developed by Chang Ye
+This is the back-testing engine developed by Chang Ye. Feel free to contect me via email: chang.ye@my.cityu.edu.hk for discussion.
 
 =========== **On-going Updates** ===========
 
-1. Fine-tuned Kronos for stock prediction and compared with traditional strategies. \\
-2. Fine-tuned Kronos for derivatives prediction.\\
-3. Implement more fancy machine learning models, such as Informer.\\
+1. Fine-tuned Kronos for stock prediction and compared with traditional strategies. \
+2. Fine-tuned Kronos for derivatives prediction.\
+3. Implement more fancy machine learning models, such as Informer.\
 4. (long term plan) Stock prediction collaboritive with stock correlation information.
 
 ============ **Recent Updates** ============
 
 **Version** 2 @ 09-05-2025
 
+Deliverables: BTEngine_v2_example.ipynb, BTToolbox
+
 Implement Kronos (from https://github.com/shiyu-coder/Kronos, thanks for the great work from Shi Yu's team!!!) for back-testing. And formalized data fetching, preprocessing and generalized the strategy function for machine learning models.
 
 
 **Version** 1 @ 09-05-2025
+
+Deliverables: backtest_example.ipynb
 
 Develop the example for backtest and time series analysis
 
