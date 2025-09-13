@@ -1,5 +1,12 @@
-# Quant-Analysis-example
-Example for backtest and time series analysis, developed by Chang Ye @ 09-05-2025
+This is the back-testing engine developed by Chang Ye
+
+============ **Update records** ============
+**Version** 2 @ 09-05-2025
+Implement Kronos (from https://github.com/shiyu-coder/Kronos, thanks for the great work from Shi Yu's team!!!) for back-testing.
+
+
+**Version** 1 @ 09-05-2025
+Develop the example for backtest and time series analysis
 
 **Stock Backtesting Engine**
 A comprehensive Python-based backtesting framework for developing and testing quantitative trading strategies using real-world market data.
